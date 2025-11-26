@@ -7,6 +7,8 @@
  * Click to select, click again to deselect.
  */
 
+import { ref } from 'vue'
+
 defineProps({
   item: {
     type: Object,
@@ -20,25 +22,28 @@ defineProps({
 
 defineEmits(['select'])
 
-/**
- * Get gradient background based on item color
- * Creates a subtle gradient effect for the icon background
- */
+const cardRef = ref(null)
+
+defineExpose({
+  getRect: () => cardRef.value?.getBoundingClientRect(),
+})
+
 function getIconStyle(color) {
   return {
-    background: `linear-gradient(135deg, ${color}15 0%, ${color}30 100%)`,
+    background: `linear-gradient(135deg, ${color}22 0%, ${color}44 100%)`,
   }
 }
 </script>
 
 <template>
   <div
+    ref="cardRef"
     @click="$emit('select', item)"
     :class="[
-      'selection-card relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200',
+      'selection-card relative p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200',
       isSelected
-        ? 'border-zenrows-selection shadow-selection bg-zenrows-selection-light/30'
-        : 'border-zenrows-card-border hover:border-gray-300 hover:shadow-card bg-white'
+        ? 'border-zenrows-selection shadow-card bg-zenrows-selection-light'
+        : 'border-zenrows-border hover:border-zenrows-selection hover:shadow-card bg-white'
     ]"
   >
     <div class="flex items-start gap-4">
@@ -70,11 +75,6 @@ function getIconStyle(color) {
       </div>
     </div>
 
-    <!-- Selection indicator (optional visual cue) -->
-    <div 
-      v-if="isSelected"
-      class="absolute top-2 right-2 w-2 h-2 bg-zenrows-selection rounded-full"
-    ></div>
   </div>
 </template>
 

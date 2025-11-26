@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import Header from './components/Header.vue'
 import Footer from './components/Footer.vue'
 import OriginList from './components/OriginList.vue'
@@ -20,6 +20,13 @@ const isLoading = ref(true)
 const isSaving = ref(false)
 const successMessage = ref('')
 const errorMessage = ref('')
+const selectionAreaRef = ref(null)
+const selectionAreaSize = ref({ width: 0, height: 0 })
+const connectionPath = ref('')
+const connectionAnchors = ref({ start: null, end: null })
+
+const originCardRefs = new Map()
+const destinationCardRefs = new Map()
 
 // Computed property to check if save button should be enabled
 const canSave = computed(() => {
@@ -30,12 +37,21 @@ const canSave = computed(() => {
  * Fetch all data from API on component mount
  */
 onMounted(async () => {
+  window.addEventListener('resize', handleResize)
   await Promise.all([
     fetchOrigins(),
     fetchDestinations(),
     fetchConfigurations()
   ])
   isLoading.value = false
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+})
+
+watch([selectedOrigin, selectedDestination], () => {
+  nextTick(updateConnectionPath)
 })
 
 /**
@@ -111,6 +127,27 @@ function handleDestinationSelect(destination) {
 }
 
 /**
+ * Register refs for origin/destination cards to calculate connection line
+ */
+function registerOriginCard(id, component) {
+  if (!component) {
+    originCardRefs.delete(id)
+    return
+  }
+  originCardRefs.set(id, component)
+  nextTick(updateConnectionPath)
+}
+
+function registerDestinationCard(id, component) {
+  if (!component) {
+    destinationCardRefs.delete(id)
+    return
+  }
+  destinationCardRefs.set(id, component)
+  nextTick(updateConnectionPath)
+}
+
+/**
  * Save the current configuration pair
  */
 async function saveConfiguration() {
@@ -171,51 +208,148 @@ async function deleteConfiguration(id) {
     errorMessage.value = 'Failed to delete configuration'
   }
 }
+
+/**
+ * Keep connection line responsive to viewport changes
+ */
+function handleResize() {
+  nextTick(updateConnectionPath)
+}
+
+/**
+ * Calculate curved path between selected origin + destination
+ */
+function updateConnectionPath() {
+  if (!canSave.value || !selectionAreaRef.value) {
+    connectionPath.value = ''
+    connectionAnchors.value = { start: null, end: null }
+    return
+  }
+
+  const originComponent = originCardRefs.get(selectedOrigin.value?.id)
+  const destinationComponent = destinationCardRefs.get(selectedDestination.value?.id)
+  const areaRect = selectionAreaRef.value?.getBoundingClientRect()
+
+  if (!originComponent || !destinationComponent || !areaRect) {
+    connectionPath.value = ''
+    connectionAnchors.value = { start: null, end: null }
+    return
+  }
+
+  const originRect = originComponent.getRect?.()
+  const destinationRect = destinationComponent.getRect?.()
+
+  if (!originRect || !destinationRect) {
+    connectionPath.value = ''
+    connectionAnchors.value = { start: null, end: null }
+    return
+  }
+
+  selectionAreaSize.value = {
+    width: areaRect.width,
+    height: areaRect.height,
+  }
+
+  const startX = originRect.right - areaRect.left
+  const startY = originRect.top - areaRect.top + originRect.height / 2
+  const endX = destinationRect.left - areaRect.left
+  const endY = destinationRect.top - areaRect.top + destinationRect.height / 2
+  const curveOffset = Math.min(180, Math.abs(endX - startX) * 0.6)
+
+  connectionAnchors.value = {
+    start: { x: startX, y: startY },
+    end: { x: endX, y: endY },
+  }
+
+  const arrowOffset = 12
+  const verticalDifference = Math.abs(endY - startY)
+
+  if (verticalDifference < 40) {
+    const controlOffset = Math.max(20, Math.abs(endX - startX) * 0.2)
+    connectionPath.value = [
+      `M ${startX} ${startY}`,
+      `C ${startX + controlOffset} ${startY}, ${endX - arrowOffset - controlOffset} ${endY}, ${endX - arrowOffset} ${endY}`,
+    ].join(' ')
+    return
+  }
+
+  const cornerRadius = 20
+  const midX = (startX + endX) / 2
+  const verticalEntry = endY > startY ? 1 : -1
+
+  connectionPath.value = [
+    `M ${startX} ${startY}`,
+    `H ${midX - cornerRadius}`,
+    `Q ${midX} ${startY} ${midX} ${startY + cornerRadius * verticalEntry}`,
+    `V ${endY - cornerRadius * verticalEntry}`,
+    `Q ${midX} ${endY} ${midX + cornerRadius} ${endY}`,
+    `H ${endX - arrowOffset}`,
+  ].join(' ')
+}
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-white">
+  <div class="min-h-screen flex flex-col bg-zenrows-bg">
     <Header />
     
     <main class="flex-1">
       <!-- Loading state -->
       <div v-if="isLoading" class="flex items-center justify-center py-20">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-zenrows-green"></div>
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-zenrows-primary"></div>
       </div>
 
       <!-- Main content -->
-      <div v-else class="max-w-6xl mx-auto px-6 py-12">
+      <div v-else class="max-w-6xl mx-auto px-6 py-16">
         <!-- Selection area -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 relative">
+        <div
+          ref="selectionAreaRef"
+          class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 relative"
+        >
           <!-- Origins column -->
           <OriginList 
             :origins="origins" 
             :selected-origin="selectedOrigin"
+            :register-card="registerOriginCard"
             @select="handleOriginSelect"
           />
 
-          <!-- Connection line SVG - shown when both are selected -->
-          <svg 
-            v-if="selectedOrigin && selectedDestination"
-            class="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-2 pointer-events-none"
-            viewBox="0 0 64 8"
+          <!-- Connection line -->
+          <svg
+            v-if="connectionPath"
+            class="hidden lg:block absolute inset-0 pointer-events-none"
+            :width="selectionAreaSize.width"
+            :height="selectionAreaSize.height"
+            :viewBox="`0 0 ${selectionAreaSize.width} ${selectionAreaSize.height}`"
           >
-            <line 
-              x1="0" 
-              y1="4" 
-              x2="64" 
-              y2="4" 
-              stroke="#818CF8" 
-              stroke-width="2"
-              stroke-dasharray="4 4"
-              class="connection-line"
+            <path
+              :d="connectionPath"
+              stroke="#7D6AF5"
+              stroke-width="3"
+              stroke-linecap="round"
+              fill="none"
             />
+            <circle
+              v-if="connectionAnchors.start"
+              :cx="connectionAnchors.start.x"
+              :cy="connectionAnchors.start.y"
+              r="5"
+              fill="#6B5CFF"
+            />
+            <g v-if="connectionAnchors.end">
+              <polygon
+                :points="`${connectionAnchors.end.x} ${connectionAnchors.end.y}, ${connectionAnchors.end.x - 10} ${connectionAnchors.end.y - 6}, ${connectionAnchors.end.x - 10} ${connectionAnchors.end.y + 6}`"
+                fill="#6B5CFF"
+                stroke="#6B5CFF"
+                stroke-linejoin="round"
+              />
+            </g>
           </svg>
 
           <!-- Destinations column -->
           <DestinationList 
             :destinations="destinations" 
             :selected-destination="selectedDestination"
+            :register-card="registerDestinationCard"
             @select="handleDestinationSelect"
           />
         </div>
@@ -226,10 +360,10 @@ async function deleteConfiguration(id) {
             @click="saveConfiguration"
             :disabled="!canSave || isSaving"
             :class="[
-              'px-8 py-3 rounded-lg font-semibold text-white transition-all duration-200',
+              'px-10 py-3.5 rounded-xl font-semibold text-white transition-all duration-200 shadow-md',
               canSave && !isSaving
-                ? 'bg-zenrows-green hover:bg-zenrows-green-hover btn-save-active cursor-pointer'
-                : 'bg-zenrows-disabled cursor-not-allowed'
+                ? 'bg-zenrows-primary hover:bg-zenrows-primary-dark cursor-pointer'
+                : 'bg-zenrows-primary-disabled opacity-70 cursor-not-allowed'
             ]"
           >
             <span v-if="isSaving">Saving...</span>
@@ -242,7 +376,7 @@ async function deleteConfiguration(id) {
           v-if="successMessage" 
           class="mt-6 max-w-md mx-auto"
         >
-          <div class="bg-zenrows-green-light border border-zenrows-green text-zenrows-green px-4 py-3 rounded-lg text-center success-message">
+          <div class="bg-zenrows-success-light border border-zenrows-success text-zenrows-success px-5 py-3 rounded-xl text-center success-message">
             {{ successMessage }}
           </div>
         </div>

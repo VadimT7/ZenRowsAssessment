@@ -17,6 +17,10 @@ defineProps({
     type: Object,
     default: null,
   },
+  registerCard: {
+    type: Function,
+    default: () => {},
+  },
 })
 
 defineEmits(['select'])
@@ -24,7 +28,7 @@ defineEmits(['select'])
 
 <template>
   <div>
-    <h2 class="text-lg font-semibold text-zenrows-text mb-4">Destinations</h2>
+    <h2 class="text-sm font-semibold uppercase tracking-widest text-zenrows-text-secondary mb-3">Destinations</h2>
     
     <div class="space-y-3">
       <SelectionCard
@@ -32,6 +36,7 @@ defineEmits(['select'])
         :key="destination.id"
         :item="destination"
         :is-selected="selectedDestination?.id === destination.id"
+        :ref="el => registerCard(destination.id, el)"
         @select="$emit('select', $event)"
       />
     </div>
