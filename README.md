@@ -41,7 +41,7 @@ Snippet of the application:
 
 1. **Clone the repository**
    ```bash
-   git clone [<repository-url>](https://github.com/VadimT7/ZenRowsAssessment)
+   git clone https://github.com/VadimT7/ZenRowsAssessment
    cd ZenRowsAssignment
    ```
 
