@@ -1,0 +1,63 @@
+{
+  "origins": [
+    {
+      "id": 1,
+      "name": "Zillow",
+      "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.",
+      "icon": "zillow",
+      "color": "#1277E1"
+    },
+    {
+      "id": 2,
+      "name": "Redfin",
+      "description": "Odio ut sem nulla pharetra diam sit. Ornare aenean euismod elementum nisi quis eleifend.",
+      "icon": "redfin",
+      "color": "#A02021"
+    },
+    {
+      "id": 3,
+      "name": "Trulia",
+      "description": "Amet consectetur adipiscing elit pellentesque habitant.",
+      "icon": "trulia",
+      "color": "#7B68EE"
+    },
+    {
+      "id": 4,
+      "name": "Realtor",
+      "description": "Arcu cursus euismod quis viverra nibh cras pulvinar mattis.",
+      "icon": "realtor",
+      "color": "#D92228"
+    }
+  ],
+  "destinations": [
+    {
+      "id": 1,
+      "name": "Amazon S3",
+      "description": "Turpis egestas pretium aenean pharetra magna ac placerat.",
+      "icon": "aws",
+      "color": "#FF9900"
+    },
+    {
+      "id": 2,
+      "name": "MySQL",
+      "description": "Accumsan sit amet nulla facilisi morbi tempus.",
+      "icon": "mysql",
+      "color": "#00758F"
+    },
+    {
+      "id": 3,
+      "name": "MongoDB",
+      "description": "Sagittis purus sit amet volutpat consequat mauris nunc congue nisi.",
+      "icon": "mongodb",
+      "color": "#47A248"
+    },
+    {
+      "id": 4,
+      "name": "PostgreSQL",
+      "description": "Neque sodales ut etiam sit amet nisl purus in mollis. Ut sem viverra aliquet eget sit.",
+      "icon": "postgresql",
+      "color": "#336791"
+    }
+  ]
+}
+
