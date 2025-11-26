@@ -164,26 +164,6 @@ curl http://localhost:8000/api/configurations
 - **ConfigurationList**: Bonus feature - displays saved pairs
 - Separation allows easy extension for future requirements
 
-## 🔄 Future Extensions
-
-The codebase is designed for easy extension:
-
-1. **Custom Origins/Destinations**
-   - Add `POST /api/origins` and `POST /api/destinations` endpoints
-   - Add create forms to the UI
-
-2. **User Authentication**
-   - Laravel Sanctum is ready to integrate
-   - Add user_id foreign key to configurations
-
-3. **Configuration Categories**
-   - Add a categories table
-   - Group configurations by type
-
-4. **Real-time Updates**
-   - Add Laravel Echo and WebSockets
-   - Update UI without page refresh
-
 ## 🐛 Troubleshooting
 
 ### Port Already in Use
@@ -211,5 +191,5 @@ MIT License - Feel free to use this code for learning and development.
 
 ---
 
-Built with ❤️ for ZenRows Technical Assessment
+Built with dedication and persistence for ZenRows Technical Assessment
 
