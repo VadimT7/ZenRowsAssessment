@@ -3,12 +3,9 @@ node_modules/
 vendor/
 
 # Environment
-.env
-.env.local
 .env.*.local
 
 # IDE
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -32,3 +29,4 @@ build/
 
 # Cursor
 .cursor/
+config.bat
