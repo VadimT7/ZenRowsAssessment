@@ -11,6 +11,10 @@ This application allows users to:
 - Save multiple configuration pairs that persist across page reloads
 - Delete saved configurations
 
+Snippet of the application:
+<img width="1879" height="1089" alt="image" src="https://github.com/user-attachments/assets/61eb72c2-ee9d-4df7-a80d-435b142f4114" />
+
+
 ## 🛠️ Tech Stack
 
 ### Backend
